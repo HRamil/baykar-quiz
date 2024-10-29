@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Button, Container, Row, Col, Table } from 'react-bootstrap';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Button, Container, Row, Col, Card, ProgressBar } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function Quiz() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const userId = searchParams.get('userId');
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -17,13 +19,12 @@ export default function Quiz() {
   useEffect(() => {
     if (userId) {
       fetch(`https://jsonplaceholder.typicode.com/posts?userId=${userId}`)
-        .then(response => response.json())
-        .then(data => {
-          const quizQuestions = data.slice(0, 10).map((item, index) => ({
+        .then((response) => response.json())
+        .then((data) => {
+          const quizQuestions = data.slice(0, 10).map((item) => ({
             id: item.id,
             question: item.title,
             options: generateOptions(item.body),
-            correctAnswer: item.body.split(' ')[0] 
           }));
           setQuestions(quizQuestions);
         });
@@ -59,35 +60,37 @@ export default function Quiz() {
       {
         question: questions[currentQuestionIndex].question,
         selectedAnswer,
-        correctAnswer: questions[currentQuestionIndex].correctAnswer,
       },
     ]);
+
     setSelectedAnswer(null);
     setCanSelectAnswer(false);
     setTimeRemaining(30);
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      alert('Quiz completed!');
+      localStorage.setItem('quizResults', JSON.stringify(quizResults));
+      router.push('/results');
     }
   }
 
   return (
     <Container className="mt-5">
       {currentQuestionIndex < questions.length ? (
-        <div>
-          <h4>Question {currentQuestionIndex + 1}</h4>
-          <p>{questions[currentQuestionIndex].question}</p>
-          <p>Time Remaining: {timeRemaining} seconds</p>
+        <Card className="p-4 shadow-sm">
+          <h4 className="mb-3">Soru {currentQuestionIndex + 1}</h4>
+          <p className="lead">{questions[currentQuestionIndex].question}</p>
+          <ProgressBar animated now={(30 - timeRemaining) * 3.33} label={`${timeRemaining}s`} />
 
-          <Row>
+          <Row className="mt-4">
             {questions[currentQuestionIndex].options?.map((option, index) => (
-              <Col md={3} key={index}>
+              <Col md={6} key={index}>
                 <Button
                   variant={selectedAnswer === option ? 'primary' : 'outline-primary'}
                   onClick={() => handleAnswerSelect(option)}
                   disabled={!canSelectAnswer}
-                  className="w-100 mb-3"
+                  className="w-100 mb-3 text-start"
                 >
                   {String.fromCharCode(65 + index)}. {option}
                 </Button>
@@ -95,41 +98,16 @@ export default function Quiz() {
             ))}
           </Row>
 
-          <Button onClick={handleNextQuestion} className="mt-3" disabled={timeRemaining > 0}>
-            Next Question
+          <Button
+            onClick={handleNextQuestion}
+            variant="success"
+            className="mt-4 w-100"
+            disabled={!selectedAnswer}
+          >
+            {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
           </Button>
-        </div>
-      ) : (
-        <ResultsTable results={quizResults} />
-      )}
-    </Container>
-  );
-}
-
-function ResultsTable({ results }) {
-  return (
-    <Container className="mt-5">
-      <h4>Quiz Results</h4>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Question</th>
-            <th>Your Answer</th>
-            <th>Correct Answer</th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.map((result, index) => (
-            <tr key={index}>
-              <td>{index + 1}</td>
-              <td>{result.question}</td>
-              <td>{result.selectedAnswer || 'No Answer'}</td>
-              <td>{result.correctAnswer}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+        </Card>
+      ) : null}
     </Container>
   );
 }
