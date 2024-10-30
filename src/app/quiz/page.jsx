@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button, Container, Row, Col, Card, ProgressBar } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function Quiz() {
+function QuizComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const userId = searchParams.get('userId');
@@ -109,5 +109,13 @@ export default function Quiz() {
         </Card>
       ) : null}
     </Container>
+  );
+}
+
+export default function Quiz() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <QuizComponent />
+    </Suspense>
   );
 }
