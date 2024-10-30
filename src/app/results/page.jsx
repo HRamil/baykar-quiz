@@ -43,7 +43,7 @@ export default function Results() {
         </tbody>
       </Table>
       <Button variant="primary" onClick={handleRetakeQuiz} className="mt-4">
-        Quiz'i Tekrar Yap
+        Quiz&apos;i Tekrar Yap
       </Button>
     </Container>
   );
